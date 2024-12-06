@@ -35,7 +35,7 @@ const ipFilter = (req, res, next) => {
 
 // Middleware giới hạn request, thêm IP vào danh sách block nếu vượt quá giới hạn
 const registerLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
+    windowMs: 60 * 60 * 1000, 
     max: 10, 
     message: 'Access forbidden: Too Many Requests',
     headers: true,

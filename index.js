@@ -15,9 +15,8 @@ app.set('trust proxy', 1);
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const secretKey = 'HDNDT-JDHT8FNEK-JJHR';
-const logFilePath = path.join(new URL(import.meta.url).pathname, 'blocked_ips.json');
+const logFilePath = path.join(__dirname, 'blocked_ips.json');
 
-// Kiểm tra nếu file chưa tồn tại thì tạo file với IP bị block sẵn
 if (!fs.existsSync(logFilePath)) {
     const initialBlockedIPs = ["185.220.101.3"];
     fs.writeFileSync(logFilePath, JSON.stringify(initialBlockedIPs, null, 2));

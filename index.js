@@ -50,7 +50,7 @@ const registerLimiter = rateLimit({
     }
 });
 
-app.post('/api/register', ipFilter, registerLimiter, (req, res) => {
+app.post('/api/authenticate', ipFilter, registerLimiter, (req, res) => {
     try {
         const { data } = req.body;
 
